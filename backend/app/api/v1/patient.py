@@ -2,15 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.db.database import get_db
-from app.models.user import User
-from app.models.patient import PatientProfile
-from app.schemas.patient import (
-    PatientProfileCreate,
-    PatientProfileUpdate,
-    PatientProfileResponse,
-)
 from app.core.security import get_current_user
+from app.db.database import get_db
+from app.models.patient import PatientProfile
+from app.models.user import User
+from app.schemas.patient import (
+    PatientProfileResponse,
+    PatientProfileUpdate,
+)
 
 router = APIRouter(prefix="/patient", tags=["patient"])
 
@@ -61,4 +60,3 @@ async def delete_account(
     # This deletes the user and cascades to patient profile and allergies
     await db.delete(current_user)
     await db.commit()
-    return None

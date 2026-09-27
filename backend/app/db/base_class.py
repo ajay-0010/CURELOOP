@@ -1,7 +1,7 @@
-from sqlalchemy.orm import as_declarative, declared_attr
-from sqlalchemy import Column, DateTime
 from datetime import datetime, timezone
-import uuid
+
+from sqlalchemy import Column, DateTime
+from sqlalchemy.orm import as_declarative, declared_attr
 
 
 @as_declarative()

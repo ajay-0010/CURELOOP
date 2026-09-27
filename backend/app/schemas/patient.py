@@ -1,15 +1,15 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
 from datetime import date
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
 
 
 class PatientProfileBase(BaseModel):
     full_name: str
-    date_of_birth: Optional[date] = None
-    blood_group: Optional[str] = None
-    emergency_contact: Optional[str] = None
-    medical_notes: Optional[str] = None
+    date_of_birth: date | None = None
+    blood_group: str | None = None
+    emergency_contact: str | None = None
+    medical_notes: str | None = None
 
 
 class PatientProfileCreate(PatientProfileBase):
@@ -17,7 +17,7 @@ class PatientProfileCreate(PatientProfileBase):
 
 
 class PatientProfileUpdate(PatientProfileBase):
-    full_name: Optional[str] = None
+    full_name: str | None = None
 
 
 class PatientProfileResponse(PatientProfileBase):

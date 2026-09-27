@@ -1,14 +1,15 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
 from uuid import UUID
-from app.models.allergy import AllergyType, AllergySeverity
+
+from pydantic import BaseModel, ConfigDict
+
+from app.models.allergy import AllergySeverity, AllergyType
 
 
 class AllergyBase(BaseModel):
     allergen_name: str
     allergy_type: AllergyType = AllergyType.DRUG
     severity: AllergySeverity = AllergySeverity.MODERATE
-    reaction_notes: Optional[str] = None
+    reaction_notes: str | None = None
 
 
 class AllergyCreate(AllergyBase):

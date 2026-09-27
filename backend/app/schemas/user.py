@@ -1,6 +1,7 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
+
 from app.models.user import UserRole
 
 

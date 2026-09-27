@@ -1,9 +1,11 @@
-from sqlalchemy import Column, String, Enum, ForeignKey
+import enum
+import uuid
+
+from sqlalchemy import Column, Enum, ForeignKey, String
 from sqlalchemy import Uuid as UUID
 from sqlalchemy.orm import relationship
+
 from app.db.base_class import Base
-import uuid
-import enum
 
 
 class AllergyType(str, enum.Enum):

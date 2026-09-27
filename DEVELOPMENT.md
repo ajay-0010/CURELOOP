@@ -1,16 +1,18 @@
 # CureLoop Development Guide
 
 ## Project State
-* **Current Phase**: Phase 1 (Foundation & Patient Auth) Completed.
-* **Next Phase**: Phase 2 (Family Profiles & Emergency Card - *Pending Instructions*)
+* **Current Phase**: Phase 2 (Manual Prescription Entry) Completed.
+* **Next Phase**: Phase 3 (Prescription Schedule Confirmation + Safety Engine - *Pending Instructions*)
 
-## Completed Work (Phase 1)
+## Completed Work (Phase 1 & 2)
 * Initialized backend repository with FastAPI structure.
 * Configured SQLite database with Alembic migrations (Fallback used as Docker Desktop / WSL2 was unavailable on host).
 * Implemented Authentication domain (Phone + mock OTP).
 * Implemented Patient Profile and Allergy schemas & APIs.
 * Implemented patient-level data isolation, token security, and account deletion.
 * Unit test coverage for auth and patient domains.
+* Implemented Phase 2: Manual Prescription Entry (Prescription, Medicine, Schedule generation).
+* Validated frequency formats and isolated prescriptions to the authenticated patient.
 
 ## Architecture Decisions
 1. **Critical Safety Rule**: Reminders will only be activated if a prescription schedule explicitly transitions to `CONFIRMED` via user input. This will be enforced strictly in the data tier and service layer in future phases.

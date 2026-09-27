@@ -1,8 +1,10 @@
-from sqlalchemy import Column, String, Date, ForeignKey
+import uuid
+
+from sqlalchemy import Column, Date, ForeignKey, String
 from sqlalchemy import Uuid as UUID
 from sqlalchemy.orm import relationship
+
 from app.db.base_class import Base
-import uuid
 
 
 class PatientProfile(Base):

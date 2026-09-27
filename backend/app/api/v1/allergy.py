@@ -1,15 +1,15 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from typing import List
-from uuid import UUID
 
-from app.db.database import get_db
-from app.models.user import User
-from app.models.patient import PatientProfile
-from app.models.allergy import Allergy
-from app.schemas.allergy import AllergyCreate, AllergyResponse
 from app.core.security import get_current_user
+from app.db.database import get_db
+from app.models.allergy import Allergy
+from app.models.patient import PatientProfile
+from app.models.user import User
+from app.schemas.allergy import AllergyCreate, AllergyResponse
 
 router = APIRouter(prefix="/patient/allergies", tags=["allergy"])
 
@@ -27,7 +27,7 @@ async def get_patient_profile_or_404(
     return profile
 
 
-@router.get("", response_model=List[AllergyResponse])
+@router.get("", response_model=list[AllergyResponse])
 async def get_allergies(
     current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
@@ -70,4 +70,3 @@ async def delete_allergy(
 
     await db.delete(allergy)
     await db.commit()
-    return None

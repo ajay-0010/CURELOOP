@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from app.core.security import create_access_token, create_refresh_token
 from app.db.database import get_db
 from app.models.user import User
-from app.schemas.user import OTPRequest, OTPVerify, Token, UserResponse
+from app.schemas.user import OTPRequest, OTPVerify, Token
 from app.services.otp_service import otp_provider
-from app.core.security import create_access_token, create_refresh_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/request-otp", status_code=status.HTTP_200_OK)
 async def request_otp(request: OTPRequest):
     # In Phase 1, we send mock OTP via service
-    otp = await otp_provider.send_otp(request.phone_number)
+    await otp_provider.send_otp(request.phone_number)
     # Don't return OTP in prod! Just for MVP ease if needed, but we keep it secure-ish by just returning success.
     return {"message": "OTP sent successfully"}
 

@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Union, Any
+from typing import Any
+
 import jwt
-from jwt import PyJWTError as JWTError
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jwt import PyJWTError as JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -15,7 +16,7 @@ security = HTTPBearer()
 
 
 def create_access_token(
-    subject: Union[str, Any], expires_delta: Optional[timedelta] = None
+    subject: str | Any, expires_delta: timedelta | None = None
 ) -> str:
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -30,7 +31,7 @@ def create_access_token(
     return encoded_jwt
 
 
-def create_refresh_token(subject: Union[str, Any]) -> str:
+def create_refresh_token(subject: str | Any) -> str:
     expire = datetime.now(timezone.utc) + timedelta(
         days=settings.REFRESH_TOKEN_EXPIRE_DAYS
     )
@@ -60,6 +61,7 @@ async def get_current_user(
         if user_id_str is None:
             raise credentials_exception
         import uuid
+
         user_id = uuid.UUID(user_id_str)
     except (JWTError, ValueError):
         raise credentials_exception

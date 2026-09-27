@@ -14,7 +14,8 @@ class OTPProvider(ABC):
 class MockOTPProvider(OTPProvider):
     # In a real system, this would be an interface to Twilio/AWS SNS etc.
     # We store mock OTPs in memory for development phase.
-    _store = {}
+    import typing
+    _store: typing.ClassVar[dict] = {}
 
     async def send_otp(self, phone_number: str) -> str:
         # Generate a fixed OTP for dev, or a random one.
@@ -29,9 +30,7 @@ class MockOTPProvider(OTPProvider):
             del self._store[phone_number]
             return True
         # For ease of testing allow 123456 always
-        if otp == "123456":
-            return True
-        return False
+        return otp == "123456"
 
 
 otp_provider = MockOTPProvider()
