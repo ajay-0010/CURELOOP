@@ -15,6 +15,7 @@ class MockOTPProvider(OTPProvider):
     # In a real system, this would be an interface to Twilio/AWS SNS etc.
     # We store mock OTPs in memory for development phase.
     import typing
+
     _store: typing.ClassVar[dict] = {}
 
     async def send_otp(self, phone_number: str) -> str:

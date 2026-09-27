@@ -1,21 +1,26 @@
 # CureLoop Development Guide
 
 ## Project State
-* **Current Phase**: Phase 2 (Manual Prescription Entry) Completed.
-* **Next Phase**: Phase 3 (Prescription Schedule Confirmation + Safety Engine - *Pending Instructions*)
+* **Current Phase**: Phase 3 (Prescription Schedule Confirmation + Safety Engine) Completed.
+* **Next Phase**: Phase 4 (Prescription Vault - *Pending Instructions*)
 
-## Completed Work (Phase 1 & 2)
+## Completed Work (Phases 1-3)
 * Initialized backend repository with FastAPI structure.
 * Configured SQLite database with Alembic migrations (Fallback used as Docker Desktop / WSL2 was unavailable on host).
 * Implemented Authentication domain (Phone + mock OTP).
 * Implemented Patient Profile and Allergy schemas & APIs.
 * Implemented patient-level data isolation, token security, and account deletion.
-* Unit test coverage for auth and patient domains.
-* Implemented Phase 2: Manual Prescription Entry (Prescription, Medicine, Schedule generation).
+* Implemented Manual Prescription Entry (Prescription, Medicine, Schedule generation).
 * Validated frequency formats and isolated prescriptions to the authenticated patient.
+* Implemented the Prescription SafetyEngine & Allergy Matching for Phase 3.
+* Implemented strictly controlled lifecycle endpoints (`submit-for-confirmation` & `confirm`).
+* Tracked consent via explicit timestamp and patient IDs.
+* Defined `can_activate_reminders()` safety boundary guard.
 
 ## Architecture Decisions
-1. **Critical Safety Rule**: Reminders will only be activated if a prescription schedule explicitly transitions to `CONFIRMED` via user input. This will be enforced strictly in the data tier and service layer in future phases.
+1. **Critical Safety Rule**: Reminders will only be activated if a prescription schedule explicitly transitions to `CONFIRMED` via user input. This will be enforced strictly in the data tier and service layer (`safety_engine.py` / `can_activate_reminders`).
+2. **Prescription Status Lifecycle**: Status flows securely `DRAFT -> PENDING_CONFIRMATION -> CONFIRMED`. Generic PUT updates to material fields automatically revert prescriptions to `PENDING_CONFIRMATION`, requiring re-consent.
+3. **Safety Engine**: Matches allergies against prescription medicine conservatively using substring logic. Since it lacks a pharmacological database, it strictly returns `UNABLE_TO_DETERMINE` when a match isn't found instead of claiming safety.
 2. **Database**: We are utilizing SQLite for local development temporarily, but models are prepared (using native SQLAlchemy `Uuid` fields) to seamlessly transition back to PostgreSQL once Docker/WSL is resolved in the deployment environment.
 3. **Mock OTP**: A `MockOTPProvider` currently fulfills OTP sending requirements.
 

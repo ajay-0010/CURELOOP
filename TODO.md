@@ -1,8 +1,8 @@
 # CureLoop Future Phases Roadmap
 
 ## Phase 3: Prescription Schedule Confirmation + Safety Engine
-- [ ] Implement Patient Confirmation screen logic and schedule state transitions.
-- [ ] Connect Allergy checker to new prescriptions.
+- [x] Implement Patient Confirmation screen logic and schedule state transitions.
+- [x] Connect Allergy checker to new prescriptions.
 
 ## Phase 4: Prescription Vault
 - [ ] R2/S3 integration for prescription photos.

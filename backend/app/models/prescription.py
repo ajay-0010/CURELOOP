@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Column, Date, Enum, ForeignKey, Integer, String, Time
+from sqlalchemy import Column, Date, DateTime, Enum, ForeignKey, Integer, String, Time
 from sqlalchemy import Uuid as UUID
 from sqlalchemy.orm import relationship
 
@@ -38,7 +38,15 @@ class Prescription(Base):
     notes = Column(String, nullable=True)
     status = Column(Enum(PrescriptionStatus), default=PrescriptionStatus.DRAFT)
 
-    patient = relationship("PatientProfile", backref="prescriptions")
+    explicit_patient_consent_timestamp = Column(DateTime(timezone=True), nullable=True)
+    confirmed_at = Column(DateTime(timezone=True), nullable=True)
+    confirmed_by_patient_id = Column(
+        UUID(as_uuid=True), ForeignKey("patient_profiles.id"), nullable=True
+    )
+
+    patient = relationship(
+        "PatientProfile", backref="prescriptions", foreign_keys=[patient_id]
+    )
     medicines = relationship(
         "PrescriptionMedicine", backref="prescription", cascade="all, delete-orphan"
     )

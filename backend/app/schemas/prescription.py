@@ -68,3 +68,9 @@ class PrescriptionResponse(PrescriptionBase):
     status: PrescriptionStatus
     medicines: list[PrescriptionMedicineResponse] = []
     model_config = ConfigDict(from_attributes=True)
+
+
+class PrescriptionConfirmationResponse(PrescriptionResponse):
+    safety: dict | None = (
+        None  # We'll use a dict here to avoid circular imports or redefining the model
+    )
