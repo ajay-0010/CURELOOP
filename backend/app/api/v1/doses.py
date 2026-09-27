@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -6,9 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
+from app.api.v1.allergy import get_patient_profile_or_404
 from app.core.security import get_current_user
 from app.db.database import get_db
-from app.api.v1.allergy import get_patient_profile_or_404
 from app.models.prescription import (
     DoseEvent,
     DoseStatus,
@@ -169,7 +169,3 @@ async def get_dose_history(
     doses = result.scalars().all()
 
     return [_enrich_dose(d) for d in doses]
-
-
-
-

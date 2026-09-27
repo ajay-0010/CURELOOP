@@ -66,7 +66,7 @@ async def generate_dose_events_for_prescription(
                         prescription_medicine_id=medicine.id,
                         medicine=medicine,
                         scheduled_at=utc_dt,
-                        status=DoseStatus.SCHEDULED
+                        status=DoseStatus.SCHEDULED,
                     )
                     db.add(dose)
                     new_events.append(dose)
@@ -88,7 +88,3 @@ async def cancel_future_doses(prescription_id, db: AsyncSession):
 
     for dose in pending_doses:
         await db.delete(dose)
-
-
-
-

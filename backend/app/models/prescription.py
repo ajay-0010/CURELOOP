@@ -1,9 +1,20 @@
-﻿import enum
+import enum
 import uuid
 
-from sqlalchemy import Column, Date, DateTime, Enum, ForeignKey, Integer, String, Time
+from sqlalchemy import (
+    JSON,
+    Column,
+    Date,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    Time,
+)
 from sqlalchemy import Uuid as UUID
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import backref, relationship
 
 from app.db.base_class import Base
 
@@ -36,6 +47,8 @@ class Prescription(Base):
     clinic_name = Column(String, nullable=True)
     prescription_date = Column(Date, nullable=False)
     notes = Column(String, nullable=True)
+    ocr_raw_text = Column(Text, nullable=True)
+    ocr_metadata = Column(JSON, nullable=True)
     status = Column(Enum(PrescriptionStatus), default=PrescriptionStatus.DRAFT)
 
     explicit_patient_consent_timestamp = Column(DateTime(timezone=True), nullable=True)
@@ -132,7 +145,10 @@ class DoseEvent(Base):
     skipped_at = Column(DateTime(timezone=True), nullable=True)
     skip_reason = Column(String, nullable=True)
 
-    prescription = relationship("Prescription", backref=backref("dose_events", cascade="all, delete-orphan"))
-    medicine = relationship("PrescriptionMedicine", backref=backref("dose_events", cascade="all, delete-orphan"))
-
-
+    prescription = relationship(
+        "Prescription", backref=backref("dose_events", cascade="all, delete-orphan")
+    )
+    medicine = relationship(
+        "PrescriptionMedicine",
+        backref=backref("dose_events", cascade="all, delete-orphan"),
+    )

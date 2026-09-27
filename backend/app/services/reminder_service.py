@@ -1,6 +1,7 @@
 from datetime import timedelta
-from app.models.prescription import DoseEvent, Prescription
+
 from app.models.appointment import Appointment, AppointmentStatus
+from app.models.prescription import DoseEvent, Prescription
 from app.services.notification_provider import notification_provider
 from app.services.safety_engine import can_activate_reminders
 
@@ -38,7 +39,8 @@ class ReminderService:
         Cancels all future reminders for a prescription.
         """
         await notification_provider.cancel_notification(
-            patient_id="unknown", notification_id=f"all_for_prescription_{prescription_id}"
+            patient_id="unknown",
+            notification_id=f"all_for_prescription_{prescription_id}",
         )
 
     @staticmethod
@@ -47,8 +49,10 @@ class ReminderService:
             return
 
         title = "Appointment Reminder"
-        clinic_text = f" at {appointment.clinic_name}" if appointment.clinic_name else ""
-        
+        clinic_text = (
+            f" at {appointment.clinic_name}" if appointment.clinic_name else ""
+        )
+
         # 24h reminder
         t24h = appointment.appointment_datetime - timedelta(hours=24)
         body_24h = f"Appointment reminder: Dr. {appointment.doctor_name}{clinic_text} tomorrow at {appointment.appointment_datetime.strftime('%I:%M %p')}."
@@ -56,9 +60,9 @@ class ReminderService:
             patient_id=str(appointment.patient_id),
             title=title,
             body=body_24h,
-            scheduled_at_utc=str(t24h)
+            scheduled_at_utc=str(t24h),
         )
-        
+
         # 2h reminder
         t2h = appointment.appointment_datetime - timedelta(hours=2)
         body_2h = f"Appointment reminder: Dr. {appointment.doctor_name}{clinic_text} today at {appointment.appointment_datetime.strftime('%I:%M %p')}."
@@ -66,12 +70,12 @@ class ReminderService:
             patient_id=str(appointment.patient_id),
             title=title,
             body=body_2h,
-            scheduled_at_utc=str(t2h)
+            scheduled_at_utc=str(t2h),
         )
 
     @staticmethod
     async def cancel_appointment_reminders(appointment_id: str, patient_id: str):
         await notification_provider.cancel_notification(
-            patient_id=patient_id, 
-            notification_id=f"all_for_appointment_{appointment_id}"
+            patient_id=patient_id,
+            notification_id=f"all_for_appointment_{appointment_id}",
         )

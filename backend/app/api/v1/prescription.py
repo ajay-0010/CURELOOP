@@ -1,4 +1,4 @@
-﻿from datetime import date
+from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -63,8 +63,7 @@ async def create_prescription(
         prescription.medicines.append(medicine)
 
     db.add(prescription)
-    await db.commit()
-    await db.refresh(prescription)
+    await db.flush()
 
     # Reload with relationships to return complete response
     stmt = (
@@ -614,3 +613,89 @@ async def export_prescription_pdf(
     )
 
 
+from fastapi import File, UploadFile
+
+from app.schemas.ocr import OCRExtractionResponse
+from app.services.ocr_engine import ocr_provider, prescription_extractor
+
+
+@router.post(
+    "/ocr", response_model=OCRExtractionResponse, status_code=status.HTTP_201_CREATED
+)
+async def create_prescription_from_ocr(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    profile = await get_patient_profile_or_404(current_user, db)
+
+    # 1. Validate image (reuse existing storage validation implicitly)
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image for OCR.")
+
+    file_bytes = await file.read()
+    if len(file_bytes) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Max 5MB.")
+
+    # 2. Store image securely
+    object_key = await storage_provider.upload(
+        file_bytes, file.filename, file.content_type
+    )
+
+    # 3. Extract text
+    ocr_result = await ocr_provider.extract_text(file_bytes, file.filename)
+
+    # 4. Extract structured data
+    structured_data = prescription_extractor.extract(ocr_result)
+
+    # 5. Create DRAFT prescription
+    now = datetime.now(timezone.utc)
+    prescription = Prescription(
+        patient_id=profile.id,
+        doctor_name=structured_data["doctor_name"],
+        prescription_date=now.date(),
+        status=PrescriptionStatus.DRAFT,
+        ocr_raw_text=ocr_result.raw_text,
+        ocr_metadata={
+            "provider": ocr_result.provider_name,
+            "confidence": ocr_result.confidence_score,
+        },
+    )
+
+    db.add(prescription)
+    await db.flush()
+
+    # Add medicine drafts
+    for med in structured_data["medicines"]:
+        if med.medicine_name.value:
+            pm = PrescriptionMedicine(
+                prescription_id=prescription.id,
+                medicine_name=med.medicine_name.value,
+                dosage=med.dosage.value or "",
+                frequency=med.frequency.value or "",
+                duration_days=int(med.duration_days.value)
+                if med.duration_days.value
+                else None,
+                food_timing=med.food_timing.value,
+            )
+            db.add(pm)
+
+    doc = PrescriptionDocument(
+        prescription_id=prescription.id,
+        object_key=object_key,
+        original_filename=file.filename,
+        content_type=file.content_type,
+        file_size=len(file_bytes),
+    )
+    presc_id = prescription.id
+    db.add(doc)
+    await db.commit()
+
+    return OCRExtractionResponse(
+        prescription_id=presc_id,
+        document_key=object_key,
+        doctor_name=structured_data["doctor_name"],
+        medicines=structured_data["medicines"],
+        raw_text=ocr_result.raw_text,
+        provider_name=ocr_result.provider_name,
+    )

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from zoneinfo import ZoneInfo
+
 import pytest
 from httpx import AsyncClient
 
@@ -58,14 +58,19 @@ async def test_phase6_appointments(client: AsyncClient):
     future_dt_edit = datetime.now(timezone.utc) + timedelta(days=3)
     edit_res = await client.put(
         f"/api/v1/appointments/{appt_id}",
-        json={"doctor_name": "Dr. Edited", "appointment_datetime": future_dt_edit.isoformat()},
+        json={
+            "doctor_name": "Dr. Edited",
+            "appointment_datetime": future_dt_edit.isoformat(),
+        },
         headers=headers,
     )
     assert edit_res.status_code == 200
     assert edit_res.json()["doctor_name"] == "Dr. Edited"
 
     # Test Complete
-    comp_res = await client.post(f"/api/v1/appointments/{appt_id}/complete", headers=headers)
+    comp_res = await client.post(
+        f"/api/v1/appointments/{appt_id}/complete", headers=headers
+    )
     assert comp_res.status_code == 200
     assert comp_res.json()["status"] == "completed"
 
@@ -74,10 +79,10 @@ async def test_phase6_appointments(client: AsyncClient):
     # upcoming is >= now. completed doesn't change datetime. So it will still appear in upcoming based on date!
     # Wait, the spec says "When an appointment is marked COMPLETED ... historical appointment should remain visible in Past appointments".
     # I should update the GET filter to exclude COMPLETED/CANCELLED from upcoming?
-    
+
     # Test Delete
     del_res = await client.delete(f"/api/v1/appointments/{appt_id}", headers=headers)
     assert del_res.status_code == 204
-    
+
     get_res = await client.get(f"/api/v1/appointments/{appt_id}", headers=headers)
     assert get_res.status_code == 404
