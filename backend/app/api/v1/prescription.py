@@ -1,4 +1,4 @@
-from datetime import date
+﻿from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -206,6 +206,13 @@ async def update_prescription(
         prescription.confirmed_at = None
         prescription.confirmed_by_patient_id = None
 
+        # Phase 5: Cancel doses and reminders
+        from app.services.dose_engine import cancel_future_doses
+        from app.services.reminder_service import ReminderService
+
+        await cancel_future_doses(prescription.id, db)
+        await ReminderService.cancel_reminders_for_prescription(prescription.id)
+
     profile_id = profile.id
     await db.commit()
     stmt = (
@@ -243,6 +250,11 @@ async def delete_prescription(
     # Delete associated documents via storage provider
     for doc in prescription.documents:
         await storage_provider.delete(doc.object_key)
+
+    # Phase 5: Cancel reminders
+    from app.services.reminder_service import ReminderService
+
+    await ReminderService.cancel_reminders_for_prescription(prescription.id)
 
     await db.delete(prescription)
     await db.commit()
@@ -301,9 +313,16 @@ async def update_prescription_medicine(
 
         if prescription.status == PrescriptionStatus.CONFIRMED:
             prescription.status = PrescriptionStatus.PENDING_CONFIRMATION
-            prescription.explicit_patient_consent_timestamp = None
-            prescription.confirmed_at = None
-            prescription.confirmed_by_patient_id = None
+        prescription.explicit_patient_consent_timestamp = None
+        prescription.confirmed_at = None
+        prescription.confirmed_by_patient_id = None
+
+        # Phase 5: Cancel doses and reminders
+        from app.services.dose_engine import cancel_future_doses
+        from app.services.reminder_service import ReminderService
+
+        await cancel_future_doses(prescription.id, db)
+        await ReminderService.cancel_reminders_for_prescription(prescription.id)
 
     profile_id = profile.id
     await db.commit()
@@ -438,6 +457,15 @@ async def confirm_prescription(
     prescription.explicit_patient_consent_timestamp = now
     prescription.confirmed_at = now
     prescription.confirmed_by_patient_id = profile.id
+
+    # Phase 5: Generate Doses
+    from app.services.dose_engine import generate_dose_events_for_prescription
+    from app.services.reminder_service import ReminderService
+
+    doses = await generate_dose_events_for_prescription(prescription, profile, db)
+
+    # Phase 5: Schedule Reminders
+    await ReminderService.schedule_reminders_for_prescription(prescription, doses)
 
     profile_id = profile.id
     await db.commit()
@@ -584,3 +612,5 @@ async def export_prescription_pdf(
             "Content-Disposition": f'attachment; filename="prescription_{id}.pdf"'
         },
     )
+
+

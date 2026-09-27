@@ -9,8 +9,10 @@
 - [x] List, filter, search prescriptions.
 
 ## Phase 5: Medicine Scheduling + Reminders + Taken/Skipped Logging
-- [ ] Push notification service for reminders.
-- [ ] Logging Taken/Skipped doses.
+- [x] Dose generation engine and APIs (Taken/Skipped/Today/History).
+- [x] Push notification service for reminders (Mocked).
+- [x] Timezone-aware logic bounding course lengths safely.
+- [x] Logging Taken/Skipped doses.
 
 ## Phase 6: Appointment Management + Reminders
 - [ ] Appointment model & CRUD API.

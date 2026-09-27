@@ -1,9 +1,9 @@
-import enum
+﻿import enum
 import uuid
 
 from sqlalchemy import Column, Date, DateTime, Enum, ForeignKey, Integer, String, Time
 from sqlalchemy import Uuid as UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
 
@@ -102,3 +102,37 @@ class PrescriptionDocument(Base):
     original_filename = Column(String, nullable=False)
     content_type = Column(String, nullable=False)
     file_size = Column(Integer, nullable=False)
+
+
+class DoseStatus(str, enum.Enum):
+    SCHEDULED = "scheduled"
+    TAKEN = "taken"
+    SKIPPED = "skipped"
+    EXPIRED = "expired"
+
+
+class DoseEvent(Base):
+    __tablename__ = "dose_events"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    prescription_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("prescriptions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    prescription_medicine_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("prescription_medicines.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    scheduled_at = Column(DateTime(timezone=True), nullable=False)
+    status = Column(Enum(DoseStatus), default=DoseStatus.SCHEDULED)
+
+    taken_at = Column(DateTime(timezone=True), nullable=True)
+    skipped_at = Column(DateTime(timezone=True), nullable=True)
+    skip_reason = Column(String, nullable=True)
+
+    prescription = relationship("Prescription", backref=backref("dose_events", cascade="all, delete-orphan"))
+    medicine = relationship("PrescriptionMedicine", backref=backref("dose_events", cascade="all, delete-orphan"))
+
+

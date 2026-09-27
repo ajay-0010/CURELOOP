@@ -16,6 +16,8 @@ async def health_check():
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(patient_router, prefix="/api/v1")
 app.include_router(allergy_router, prefix="/api/v1")
+from app.api.v1.doses import router as doses_router
 from app.api.v1.prescription import router as prescription_router
 
 app.include_router(prescription_router, prefix="/api/v1")
+app.include_router(doses_router, prefix="/api/v1")

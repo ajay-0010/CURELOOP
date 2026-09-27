@@ -22,5 +22,6 @@ class PatientProfile(Base):
     blood_group = Column(String, nullable=True)
     emergency_contact = Column(String, nullable=True)
     medical_notes = Column(String, nullable=True)
+    timezone = Column(String, default="UTC", nullable=False)
 
     user = relationship("User", backref="patient_profile")

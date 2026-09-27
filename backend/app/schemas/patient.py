@@ -10,6 +10,7 @@ class PatientProfileBase(BaseModel):
     blood_group: str | None = None
     emergency_contact: str | None = None
     medical_notes: str | None = None
+    timezone: str = "UTC"
 
 
 class PatientProfileCreate(PatientProfileBase):

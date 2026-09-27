@@ -1,10 +1,10 @@
 # CureLoop Development Guide
 
 ## Project State
-* **Current Phase**: Phase 4 (Prescription Vault) Completed.
-* **Next Phase**: Phase 5 (Medicine Scheduling + Reminders + Taken/Skipped Logging - *Pending Instructions*)
+* **Current Phase**: Phase 5 (Medicine Scheduling + Reminders) Completed.
+* **Next Phase**: Phase 6 (Appointment Management + Reminders - *Pending Instructions*)
 
-## Completed Work (Phases 1-4)
+## Completed Work (Phases 1-5)
 * Initialized backend repository with FastAPI structure.
 * Configured SQLite database with Alembic migrations (Fallback used as Docker Desktop / WSL2 was unavailable on host).
 * Implemented Authentication domain (Phone + mock OTP).
@@ -19,12 +19,21 @@
 * Implemented Prescription Vault with robust server-side search (`GET /api/v1/prescriptions`).
 * Implemented `StorageProvider` abstraction for document uploads, featuring UUID-based secure object keys, local dev implementation, strict file validation (type, size), and orphaned-file deletion.
 * Defined `PDFExportService` boundary preparing for future exports.
+* Implemented DoseEvent schema/models tracking `TAKEN`/`SKIPPED` adherence per medicine occurrence.
+* Engineered Timezone-aware local dose generation syncing explicitly with patient's standard UTC mapping.
+* Programmed idempotency around Dose generation — duplicate invocations wipe un-actioned upcoming doses while preserving historical taken/skipped doses.
+* Connected mock `NotificationProvider` and abstract `ReminderService` bounded strictly by patient confirmation blocks.
+* Automated cancellation of future reminders upon Prescription edits / soft-deletions / duration-timeouts.
 
 ## Architecture Decisions
 1. **Critical Safety Rule**: Reminders will only be activated if a prescription schedule explicitly transitions to `CONFIRMED` via user input. This will be enforced strictly in the data tier and service layer (`safety_engine.py` / `can_activate_reminders`). Uploading documents does *not* auto-confirm.
 2. **Prescription Status Lifecycle**: Status flows securely `DRAFT -> PENDING_CONFIRMATION -> CONFIRMED`. Generic PUT updates to material fields automatically revert prescriptions to `PENDING_CONFIRMATION`, requiring re-consent.
 3. **Safety Engine**: Matches allergies against prescription medicine conservatively using substring logic. Since it lacks a pharmacological database, it strictly returns `UNABLE_TO_DETERMINE` when a match isn't found instead of claiming safety.
 4. **Storage Abstraction**: The Vault strictly uses `StorageProvider` interface (`local` for development). Production environments will use `S3StorageProvider` requiring bucket/AWS credentials via environment variables. Documents are completely private; authorized users request them via token authentication, mapped to the underlying storage provider.
+5. **Dose Event Generation**: Occurrences of a schedule (e.g. 1-0-1 Morning and Night) are unrolled into individual discrete `DoseEvent` entities in the database when a prescription is `CONFIRMED`. They span out maximally to `duration_days` ending the course naturally without chron job cleanups.
+6. **Timezone Strategy**: System utilizes canonical UTC for all timestamp tracking, while resolving patient-local days (e.g., Morning) bounded by the `timezone` parameter appended to `PatientProfile`. Timezone is dynamically processed via `zoneinfo`.
+7. **Reminder Orchestration**: The `ReminderService` operates abstractly against a `NotificationProvider`. For integration tests and rapid iteration, a `MockNotificationProvider` captures events sequentially without real cloud credentials.
+8. **Idempotency & Re-confirmations**: Generative `DoseEvent` creation preserves historic `TAKEN`/`SKIPPED` statuses when a prescription undergoes a PENDING->CONFIRMED sequence repeatedly. Only un-actioned upcoming doses are recreated. Material edits instantly cancel future notifications and doses.
 2. **Database**: We are utilizing SQLite for local development temporarily, but models are prepared (using native SQLAlchemy `Uuid` fields) to seamlessly transition back to PostgreSQL once Docker/WSL is resolved in the deployment environment.
 3. **Mock OTP**: A `MockOTPProvider` currently fulfills OTP sending requirements.
 
