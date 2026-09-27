@@ -18,16 +18,18 @@ class MedicineScheduleResponse(MedicineScheduleBase):
 
 
 class PrescriptionMedicineBase(BaseModel):
-    medicine_name: str = Field(..., min_length=1)
-    dosage: str = Field(..., min_length=1)
-    frequency: str = Field(..., description="E.g., 1-0-1 or 1-1-1")
-    duration_days: int = Field(..., gt=0)
-    food_timing: FoodTiming = FoodTiming.NO_INSTRUCTION
+    medicine_name: str | None = Field(None, min_length=1)
+    dosage: str | None = Field(None, min_length=1)
+    frequency: str | None = Field(None, description="E.g., 1-0-1 or 1-1-1")
+    duration_days: int | None = Field(None, gt=0)
+    food_timing: FoodTiming | None = FoodTiming.NO_INSTRUCTION
     instructions: str | None = None
 
     @field_validator("frequency")
     @classmethod
-    def validate_frequency(cls, v: str) -> str:
+    def validate_frequency(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
         if not re.match(r"^\d(-\d)+$", v):
             raise ValueError("Frequency must be in format like 1-0-1 or 1-1-1-1")
         return v

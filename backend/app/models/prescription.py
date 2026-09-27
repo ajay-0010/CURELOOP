@@ -77,11 +77,13 @@ class PrescriptionMedicine(Base):
         nullable=False,
     )
 
-    medicine_name = Column(String, nullable=False)
-    dosage = Column(String, nullable=False)
-    frequency = Column(String, nullable=False)  # e.g. "1-0-1"
-    duration_days = Column(Integer, nullable=False)
-    food_timing = Column(Enum(FoodTiming), default=FoodTiming.NO_INSTRUCTION)
+    medicine_name = Column(String, nullable=True)
+    dosage = Column(String, nullable=True)
+    frequency = Column(String, nullable=True)  # e.g. "1-0-1"
+    duration_days = Column(Integer, nullable=True)
+    food_timing = Column(
+        Enum(FoodTiming), nullable=True, default=FoodTiming.NO_INSTRUCTION
+    )
     instructions = Column(String, nullable=True)
 
     schedules = relationship(

@@ -367,6 +367,19 @@ async def submit_for_confirmation(
             status_code=400, detail="Only DRAFT prescriptions can be submitted."
         )
 
+    for med in prescription.medicines:
+        if (
+            not med.medicine_name
+            or not med.dosage
+            or not med.frequency
+            or not med.duration_days
+            or med.food_timing is None
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot confirm prescription with unresolved medication details for {med.medicine_name or 'Unknown Medicine'}.",
+            )
+
     prescription.status = PrescriptionStatus.PENDING_CONFIRMATION
     profile_id = profile.id
     await db.commit()
@@ -442,6 +455,19 @@ async def confirm_prescription(
             status_code=400,
             detail="Prescription must be PENDING_CONFIRMATION to confirm.",
         )
+
+    for med in prescription.medicines:
+        if (
+            not med.medicine_name
+            or not med.dosage
+            or not med.frequency
+            or not med.duration_days
+            or med.food_timing is None
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot confirm prescription with unresolved medication details for {med.medicine_name or 'Unknown Medicine'}.",
+            )
 
     allergy_stmt = select(Allergy).where(Allergy.patient_id == profile.id)
     allergy_result = await db.execute(allergy_stmt)
@@ -667,18 +693,17 @@ async def create_prescription_from_ocr(
 
     # Add medicine drafts
     for med in structured_data["medicines"]:
-        if med.medicine_name.value:
-            pm = PrescriptionMedicine(
-                prescription_id=prescription.id,
-                medicine_name=med.medicine_name.value,
-                dosage=med.dosage.value or "",
-                frequency=med.frequency.value or "",
-                duration_days=int(med.duration_days.value)
-                if med.duration_days.value
-                else None,
-                food_timing=med.food_timing.value,
-            )
-            db.add(pm)
+        pm = PrescriptionMedicine(
+            prescription_id=prescription.id,
+            medicine_name=med.medicine_name.value,
+            dosage=med.dosage.value,
+            frequency=med.frequency.value,
+            duration_days=int(med.duration_days.value)
+            if med.duration_days.value
+            else None,
+            food_timing=med.food_timing.value,
+        )
+        db.add(pm)
 
     doc = PrescriptionDocument(
         prescription_id=prescription.id,

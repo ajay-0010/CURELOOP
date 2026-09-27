@@ -11,3 +11,5 @@ from app.models.prescription import (  # noqa: F401
     PrescriptionMedicine,
 )
 from app.models.user import User  # noqa: F401
+
+from app.models.appointment import Appointment  # noqa: F401

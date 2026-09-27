@@ -1,4 +1,4 @@
-import re
+﻿import re
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -46,6 +46,8 @@ class MockOCRProvider(BaseOCRProvider):
             text = "Dr. NoDuration\nAmoxicillin 500mg 1-0-1\n"
         elif "ambiguous" in filename.lower():
             text = "Dr. Amb\nUnknownMedX or something 500mg 1-0-0 3 days\n"
+        elif "missing_everything" in filename.lower():
+            text = "Dr. Missing\nunreadable\n"
         elif "unreadable" in filename.lower():
             text = "x@!$*#&\n"
         else:
@@ -109,6 +111,7 @@ class PrescriptionExtractionService:
         for line in lines[1:]:
             lower_line = line.lower()
             if "unreadable" in lower_line or "x@!" in lower_line:
+                medicines.append(CandidateMedicine(medicine_name=ExtractedField(value=None, confidence="UNKNOWN"), dosage=ExtractedField(value=None, confidence="UNKNOWN"), frequency=ExtractedField(value=None, confidence="UNKNOWN"), duration_days=ExtractedField(value=None, confidence="UNKNOWN"), food_timing=ExtractedField(value=None, confidence="UNKNOWN")))
                 continue
 
             # Naive Regex Extractors
@@ -157,3 +160,8 @@ class PrescriptionExtractionService:
 ocr_provider = MockOCRProvider()
 medicine_matcher = MedicineMatcher()
 prescription_extractor = PrescriptionExtractionService(medicine_matcher)
+
+
+
+
+
