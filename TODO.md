@@ -15,8 +15,8 @@
 - [x] Logging Taken/Skipped doses.
 
 ## Phase 6: Appointment Management + Reminders
-- [ ] Appointment model & CRUD API.
-- [ ] Appointment reminder scheduling.
+- [x] Appointment model & CRUD API.
+- [x] Appointment reminder scheduling.
 
 ## Phase 7: Prescription OCR
 - [ ] OCR Service integration (behind interface).

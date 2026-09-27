@@ -1,10 +1,10 @@
 # CureLoop Development Guide
 
 ## Project State
-* **Current Phase**: Phase 5 (Medicine Scheduling + Reminders) Completed.
-* **Next Phase**: Phase 6 (Appointment Management + Reminders - *Pending Instructions*)
+* **Current Phase**: Phase 6 (Appointment Management + Reminders) Completed.
+* **Next Phase**: Phase 7 (Prescription OCR - *Pending Instructions*)
 
-## Completed Work (Phases 1-5)
+## Completed Work (Phases 1-6)
 * Initialized backend repository with FastAPI structure.
 * Configured SQLite database with Alembic migrations (Fallback used as Docker Desktop / WSL2 was unavailable on host).
 * Implemented Authentication domain (Phone + mock OTP).
@@ -24,6 +24,8 @@
 * Programmed idempotency around Dose generation — duplicate invocations wipe un-actioned upcoming doses while preserving historical taken/skipped doses.
 * Connected mock `NotificationProvider` and abstract `ReminderService` bounded strictly by patient confirmation blocks.
 * Automated cancellation of future reminders upon Prescription edits / soft-deletions / duration-timeouts.
+* Engineered generic `Appointment` domain (POST/GET/PUT/DELETE/Complete) integrated seamlessly into the existing Timezone handling architecture (canonical UTC tracking natively matched to local zones).
+* Unified the `ReminderService` payload generation across Medicine/Appointment domains handling precise offset cancellations (24h/2h).
 
 ## Architecture Decisions
 1. **Critical Safety Rule**: Reminders will only be activated if a prescription schedule explicitly transitions to `CONFIRMED` via user input. This will be enforced strictly in the data tier and service layer (`safety_engine.py` / `can_activate_reminders`). Uploading documents does *not* auto-confirm.
