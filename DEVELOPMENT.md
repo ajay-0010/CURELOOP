@@ -1,10 +1,10 @@
 # CureLoop Development Guide
 
 ## Project State
-* **Current Phase**: Phase 3 (Prescription Schedule Confirmation + Safety Engine) Completed.
-* **Next Phase**: Phase 4 (Prescription Vault - *Pending Instructions*)
+* **Current Phase**: Phase 4 (Prescription Vault) Completed.
+* **Next Phase**: Phase 5 (Medicine Scheduling + Reminders + Taken/Skipped Logging - *Pending Instructions*)
 
-## Completed Work (Phases 1-3)
+## Completed Work (Phases 1-4)
 * Initialized backend repository with FastAPI structure.
 * Configured SQLite database with Alembic migrations (Fallback used as Docker Desktop / WSL2 was unavailable on host).
 * Implemented Authentication domain (Phone + mock OTP).
@@ -16,11 +16,15 @@
 * Implemented strictly controlled lifecycle endpoints (`submit-for-confirmation` & `confirm`).
 * Tracked consent via explicit timestamp and patient IDs.
 * Defined `can_activate_reminders()` safety boundary guard.
+* Implemented Prescription Vault with robust server-side search (`GET /api/v1/prescriptions`).
+* Implemented `StorageProvider` abstraction for document uploads, featuring UUID-based secure object keys, local dev implementation, strict file validation (type, size), and orphaned-file deletion.
+* Defined `PDFExportService` boundary preparing for future exports.
 
 ## Architecture Decisions
-1. **Critical Safety Rule**: Reminders will only be activated if a prescription schedule explicitly transitions to `CONFIRMED` via user input. This will be enforced strictly in the data tier and service layer (`safety_engine.py` / `can_activate_reminders`).
+1. **Critical Safety Rule**: Reminders will only be activated if a prescription schedule explicitly transitions to `CONFIRMED` via user input. This will be enforced strictly in the data tier and service layer (`safety_engine.py` / `can_activate_reminders`). Uploading documents does *not* auto-confirm.
 2. **Prescription Status Lifecycle**: Status flows securely `DRAFT -> PENDING_CONFIRMATION -> CONFIRMED`. Generic PUT updates to material fields automatically revert prescriptions to `PENDING_CONFIRMATION`, requiring re-consent.
 3. **Safety Engine**: Matches allergies against prescription medicine conservatively using substring logic. Since it lacks a pharmacological database, it strictly returns `UNABLE_TO_DETERMINE` when a match isn't found instead of claiming safety.
+4. **Storage Abstraction**: The Vault strictly uses `StorageProvider` interface (`local` for development). Production environments will use `S3StorageProvider` requiring bucket/AWS credentials via environment variables. Documents are completely private; authorized users request them via token authentication, mapped to the underlying storage provider.
 2. **Database**: We are utilizing SQLite for local development temporarily, but models are prepared (using native SQLAlchemy `Uuid` fields) to seamlessly transition back to PostgreSQL once Docker/WSL is resolved in the deployment environment.
 3. **Mock OTP**: A `MockOTPProvider` currently fulfills OTP sending requirements.
 

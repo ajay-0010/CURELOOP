@@ -62,11 +62,21 @@ class PrescriptionUpdate(BaseModel):
     notes: str | None = None
 
 
+class PrescriptionDocumentResponse(BaseModel):
+    id: UUID
+    object_key: str
+    original_filename: str
+    content_type: str
+    file_size: int
+    model_config = ConfigDict(from_attributes=True)
+
+
 class PrescriptionResponse(PrescriptionBase):
     id: UUID
     patient_id: UUID
     status: PrescriptionStatus
     medicines: list[PrescriptionMedicineResponse] = []
+    documents: list[PrescriptionDocumentResponse] = []
     model_config = ConfigDict(from_attributes=True)
 
 

@@ -1,4 +1,5 @@
-﻿from uuid import UUID
+from datetime import date
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,7 +72,8 @@ async def create_prescription(
         .options(
             selectinload(Prescription.medicines).selectinload(
                 PrescriptionMedicine.schedules
-            )
+            ),
+            selectinload(Prescription.documents),
         )
         .where(Prescription.id == prescription.id)
     )
@@ -83,7 +85,12 @@ async def create_prescription(
 
 @router.get("", response_model=list[PrescriptionResponse])
 async def get_prescriptions(
-    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+    search: str | None = None,
+    doctor: str | None = None,
+    from_date: date | None = None,
+    to_date: date | None = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     profile = await get_patient_profile_or_404(current_user, db)
     stmt = (
@@ -91,13 +98,26 @@ async def get_prescriptions(
         .options(
             selectinload(Prescription.medicines).selectinload(
                 PrescriptionMedicine.schedules
-            )
+            ),
+            selectinload(Prescription.documents),
+            selectinload(Prescription.documents),
         )
         .where(Prescription.patient_id == profile.id)
     )
 
+    if doctor:
+        stmt = stmt.where(Prescription.doctor_name.ilike(f"%{doctor}%"))
+    if from_date:
+        stmt = stmt.where(Prescription.prescription_date >= from_date)
+    if to_date:
+        stmt = stmt.where(Prescription.prescription_date <= to_date)
+    if search:
+        stmt = stmt.join(PrescriptionMedicine).where(
+            PrescriptionMedicine.medicine_name.ilike(f"%{search}%")
+        )
+
     result = await db.execute(stmt)
-    prescriptions = result.scalars().all()
+    prescriptions = result.scalars().unique().all()
     return prescriptions
 
 
@@ -113,7 +133,8 @@ async def get_prescription(
         .options(
             selectinload(Prescription.medicines).selectinload(
                 PrescriptionMedicine.schedules
-            )
+            ),
+            selectinload(Prescription.documents),
         )
         .where(Prescription.id == id, Prescription.patient_id == profile.id)
     )
@@ -140,7 +161,8 @@ async def update_prescription(
         .options(
             selectinload(Prescription.medicines).selectinload(
                 PrescriptionMedicine.schedules
-            )
+            ),
+            selectinload(Prescription.documents),
         )
         .where(Prescription.id == id, Prescription.patient_id == profile.id)
     )
@@ -191,7 +213,8 @@ async def update_prescription(
         .options(
             selectinload(Prescription.medicines).selectinload(
                 PrescriptionMedicine.schedules
-            )
+            ),
+            selectinload(Prescription.documents),
         )
         .where(Prescription.id == id, Prescription.patient_id == profile_id)
     )
@@ -206,14 +229,20 @@ async def delete_prescription(
     db: AsyncSession = Depends(get_db),
 ):
     profile = await get_patient_profile_or_404(current_user, db)
-    stmt = select(Prescription).where(
-        Prescription.id == id, Prescription.patient_id == profile.id
+    stmt = (
+        select(Prescription)
+        .options(selectinload(Prescription.documents))
+        .where(Prescription.id == id, Prescription.patient_id == profile.id)
     )
     result = await db.execute(stmt)
     prescription = result.scalar_one_or_none()
 
     if not prescription:
         raise HTTPException(status_code=404, detail="Prescription not found")
+
+    # Delete associated documents via storage provider
+    for doc in prescription.documents:
+        await storage_provider.delete(doc.object_key)
 
     await db.delete(prescription)
     await db.commit()
@@ -243,7 +272,8 @@ async def update_prescription_medicine(
         .options(
             selectinload(Prescription.medicines).selectinload(
                 PrescriptionMedicine.schedules
-            )
+            ),
+            selectinload(Prescription.documents),
         )
         .where(Prescription.id == id, Prescription.patient_id == profile.id)
     )
@@ -282,7 +312,8 @@ async def update_prescription_medicine(
         .options(
             selectinload(Prescription.medicines).selectinload(
                 PrescriptionMedicine.schedules
-            )
+            ),
+            selectinload(Prescription.documents),
         )
         .where(Prescription.id == id, Prescription.patient_id == profile_id)
     )
@@ -302,7 +333,8 @@ async def submit_for_confirmation(
         .options(
             selectinload(Prescription.medicines).selectinload(
                 PrescriptionMedicine.schedules
-            )
+            ),
+            selectinload(Prescription.documents),
         )
         .where(Prescription.id == id, Prescription.patient_id == profile.id)
     )
@@ -325,7 +357,8 @@ async def submit_for_confirmation(
         .options(
             selectinload(Prescription.medicines).selectinload(
                 PrescriptionMedicine.schedules
-            )
+            ),
+            selectinload(Prescription.documents),
         )
         .where(Prescription.id == id, Prescription.patient_id == profile_id)
     )
@@ -375,7 +408,8 @@ async def confirm_prescription(
         .options(
             selectinload(Prescription.medicines).selectinload(
                 PrescriptionMedicine.schedules
-            )
+            ),
+            selectinload(Prescription.documents),
         )
         .where(Prescription.id == id, Prescription.patient_id == profile.id)
     )
@@ -412,7 +446,8 @@ async def confirm_prescription(
         .options(
             selectinload(Prescription.medicines).selectinload(
                 PrescriptionMedicine.schedules
-            )
+            ),
+            selectinload(Prescription.documents),
         )
         .where(Prescription.id == id, Prescription.patient_id == profile_id)
     )
@@ -424,4 +459,128 @@ async def confirm_prescription(
     return resp_data
 
 
+from fastapi import File, UploadFile
+from fastapi.responses import FileResponse
 
+from app.models.prescription import PrescriptionDocument
+from app.schemas.prescription import PrescriptionDocumentResponse
+from app.services.storage_provider import storage_provider
+
+
+@router.post(
+    "/{id}/documents", response_model=PrescriptionDocumentResponse, status_code=201
+)
+async def upload_prescription_document(
+    id: UUID,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    profile = await get_patient_profile_or_404(current_user, db)
+    stmt = select(Prescription).where(
+        Prescription.id == id, Prescription.patient_id == profile.id
+    )
+    result = await db.execute(stmt)
+    prescription = result.scalar_one_or_none()
+
+    if not prescription:
+        raise HTTPException(status_code=404, detail="Prescription not found")
+
+    # File validation
+    ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"]
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file type. Only JPEG, PNG, and PDF are allowed.",
+        )
+
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:  # 10MB limit
+        raise HTTPException(status_code=400, detail="File size exceeds 10MB limit.")
+
+    object_key = await storage_provider.upload(
+        content, file.filename, file.content_type
+    )
+
+    doc = PrescriptionDocument(
+        prescription_id=prescription.id,
+        storage_provider="local",
+        object_key=object_key,
+        original_filename=file.filename,
+        content_type=file.content_type,
+        file_size=len(content),
+    )
+    db.add(doc)
+    await db.commit()
+    await db.refresh(doc)
+
+    return doc
+
+
+@router.get("/documents/{object_key}", response_class=FileResponse)
+async def get_prescription_document_file(
+    object_key: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # Security: Verify the user owns the prescription associated with this document
+    profile = await get_patient_profile_or_404(current_user, db)
+
+    stmt = (
+        select(PrescriptionDocument)
+        .join(Prescription)
+        .where(
+            PrescriptionDocument.object_key == object_key,
+            Prescription.patient_id == profile.id,
+        )
+    )
+    result = await db.execute(stmt)
+    doc = result.scalar_one_or_none()
+
+    if not doc:
+        raise HTTPException(
+            status_code=404, detail="Document not found or access denied"
+        )
+
+    # Local dev mode specific
+    if hasattr(storage_provider, "get_local_path"):
+        path = storage_provider.get_local_path(object_key)
+        if path:
+            return FileResponse(
+                path, media_type=doc.content_type, filename=doc.original_filename
+            )
+
+    raise HTTPException(status_code=404, detail="File not found on disk")
+
+
+from fastapi.responses import Response
+
+from app.services.pdf_export import pdf_export_service
+
+
+@router.get("/{id}/export/pdf", response_class=Response)
+async def export_prescription_pdf(
+    id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    profile = await get_patient_profile_or_404(current_user, db)
+    stmt = select(Prescription).where(
+        Prescription.id == id, Prescription.patient_id == profile.id
+    )
+    result = await db.execute(stmt)
+    prescription = result.scalar_one_or_none()
+
+    if not prescription:
+        raise HTTPException(status_code=404, detail="Prescription not found")
+
+    pdf_bytes = await pdf_export_service.export_prescription_to_pdf(
+        prescription.id, profile.id
+    )
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="prescription_{id}.pdf"'
+        },
+    )

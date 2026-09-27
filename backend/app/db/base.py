@@ -6,6 +6,7 @@ from app.models.patient import PatientProfile  # noqa: F401
 from app.models.prescription import (  # noqa: F401
     MedicineSchedule,
     Prescription,
+    PrescriptionDocument,
     PrescriptionMedicine,
 )
 from app.models.user import User  # noqa: F401

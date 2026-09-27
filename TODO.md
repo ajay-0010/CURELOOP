@@ -5,8 +5,8 @@
 - [x] Connect Allergy checker to new prescriptions.
 
 ## Phase 4: Prescription Vault
-- [ ] R2/S3 integration for prescription photos.
-- [ ] List, filter, search prescriptions.
+- [x] R2/S3 integration for prescription photos.
+- [x] List, filter, search prescriptions.
 
 ## Phase 5: Medicine Scheduling + Reminders + Taken/Skipped Logging
 - [ ] Push notification service for reminders.

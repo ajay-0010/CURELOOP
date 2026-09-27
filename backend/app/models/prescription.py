@@ -50,6 +50,9 @@ class Prescription(Base):
     medicines = relationship(
         "PrescriptionMedicine", backref="prescription", cascade="all, delete-orphan"
     )
+    documents = relationship(
+        "PrescriptionDocument", backref="prescription", cascade="all, delete-orphan"
+    )
 
 
 class PrescriptionMedicine(Base):
@@ -84,3 +87,18 @@ class MedicineSchedule(Base):
 
     # Represents the time of day a medicine should be taken
     scheduled_time = Column(Time, nullable=False)
+
+
+class PrescriptionDocument(Base):
+    __tablename__ = "prescription_documents"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    prescription_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("prescriptions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    storage_provider = Column(String, nullable=False, default="local")
+    object_key = Column(String, nullable=False, unique=True)
+    original_filename = Column(String, nullable=False)
+    content_type = Column(String, nullable=False)
+    file_size = Column(Integer, nullable=False)
