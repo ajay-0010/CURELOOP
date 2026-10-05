@@ -157,9 +157,14 @@ class PrescriptionExtractionService:
 
 
 # Global instances
-ocr_provider = MockOCRProvider()
+import os
+if os.getenv("USE_REAL_OCR") == "true":
+    ocr_provider = GoogleVisionOCRProvider()
+else:
+    ocr_provider = MockOCRProvider()
 medicine_matcher = MedicineMatcher()
 prescription_extractor = PrescriptionExtractionService(medicine_matcher)
+
 
 
 

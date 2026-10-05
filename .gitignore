@@ -50,3 +50,13 @@ data/
 build/
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Credentials
+*.json
+!package.json
+!package-lock.json
+firebase-adminsdk.json
+google-services.json
+
+# Flutter SDK
+flutter_sdk/

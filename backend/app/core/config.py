@@ -1,7 +1,6 @@
-import os
+﻿import os
 
 from pydantic_settings import BaseSettings
-
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "CureLoop API"
@@ -18,13 +17,17 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # CORS
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    # Rate limiting
+    OTP_RATE_LIMIT_MINUTES: int = 5
+    OTP_MAX_REQUESTS: int = 3
+
     class Config:
         env_file = ".env"
 
-
-# Because the .env is in the root directory and we might run from backend, let's load it relative to root
 import dotenv
-
 dotenv.load_dotenv(
     dotenv_path=os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"
@@ -35,6 +38,6 @@ dotenv.load_dotenv(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
         ".env",
     )
-)  # Fallback
+)
 
 settings = Settings()

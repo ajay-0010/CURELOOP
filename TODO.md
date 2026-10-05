@@ -1,4 +1,4 @@
-# CureLoop Future Phases Roadmap
+﻿# CureLoop Future Phases Roadmap
 
 ## Phase 3: Prescription Schedule Confirmation + Safety Engine
 - [x] Implement Patient Confirmation screen logic and schedule state transitions.
@@ -19,7 +19,8 @@
 - [x] Appointment reminder scheduling.
 
 ## Phase 7: Prescription OCR
-- [ ] OCR Service integration (behind interface).
+- [x] OCR Service integration (behind interface).
+- [x] Integrate OCR with SafetyEngine and existing confirmation mechanism.
 
 ## Phase 8: Family Profiles
 - [ ] Update models to support family members tied to a primary account.
@@ -37,3 +38,4 @@
 - [ ] Transition mock OTP to real SMS provider (Twilio/AWS).
 - [ ] Configure production PostgreSQL instance.
 - [ ] Implement robust CI/CD pipelines.
+

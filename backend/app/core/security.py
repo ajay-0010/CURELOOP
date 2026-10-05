@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+﻿from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import jwt
@@ -75,3 +75,16 @@ async def get_current_user(
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return user
+
+def verify_refresh_token(token: str) -> str | None:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+        if payload.get("type") != "refresh":
+            return None
+        return payload.get("sub")
+    except (JWTError, ValueError):
+        return None
