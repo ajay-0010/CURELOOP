@@ -20,6 +20,10 @@ dependencies:
   firebase_core: ^4.15.0
   firebase_messaging: ^16.7.0
   pinput: ^7.0.0
+  drift: ^2.21.0
+  sqlite3_flutter_libs: ^0.6.0+eol
+  path_provider: ^2.1.6
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:
@@ -30,6 +34,7 @@ dev_dependencies:
   riverpod_generator: ^2.3.10
   custom_lint: ^0.5.7
   riverpod_lint: ^2.3.8
+  drift_dev: ^2.21.2
 
 flutter:
   uses-material-design: true

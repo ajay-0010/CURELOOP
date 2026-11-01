@@ -1,13 +1,61 @@
-# Python
+# =============================================================================
+# CureLoop Master .gitignore
+# =============================================================================
+# Designed to ensure full-stack reproducibility when cloned from GitHub.
+# Preserves all essential source code, pre-generated .g.dart files, Gradle wrapper,
+# and feature data layers (lib/features/*/data/) while ignoring temporary caches,
+# credentials, build outputs, and local environments.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Environment & Local Secrets
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*firebase-adminsdk*.json
+*google-services*.json
+*service-account*.json
+
+# -----------------------------------------------------------------------------
+# 2. Operating System & IDE Files
+# -----------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# IDEs (VS Code & IntelliJ / Android Studio)
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# -----------------------------------------------------------------------------
+# 3. Python & FastAPI Backend
+# -----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 env/
-build/
-develop-eggs/
+.env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
 dist/
+develop-eggs/
 downloads/
 eggs/
 .eggs/
@@ -17,45 +65,54 @@ sdist/
 var/
 wheels/
 share/python-wheels/
-*.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 
-# Environment
-.env
-.venv
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# IDEs
-.idea/
-.vscode/
-*.swp
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Database
-data/
+# Backend Runtime Data & Dev Storage
+# (CRITICAL: Root-level /data/ only - do NOT use bare data/ as that ignores
+# feature data folders such as patient_app/lib/features/*/data/)
+/data/
 *.sqlite3
+backend/storage_dev/*.png
+backend/storage_dev/*.jpg
+backend/storage_dev/*.jpeg
+backend/storage_dev/*.pdf
+!backend/storage_dev/.gitkeep
 
-# Flutter
+# -----------------------------------------------------------------------------
+# 4. Flutter & Dart (patient_app)
+# -----------------------------------------------------------------------------
 .dart_tool/
 .packages
-build/
 .flutter-plugins
 .flutter-plugins-dependencies
+.pub-cache/
+.pub/
 
-# Credentials
-*.json
-!package.json
-!package-lock.json
-firebase-adminsdk.json
-google-services.json
+# Flutter build outputs (ignore build directory but preserve pre-built release APK if committed)
+patient_app/build/*
+!patient_app/build/app/
+patient_app/build/app/*
+!patient_app/build/app/outputs/
+patient_app/build/app/outputs/*
+!patient_app/build/app/outputs/flutter-apk/
+patient_app/build/app/outputs/flutter-apk/*
+!patient_app/build/app/outputs/flutter-apk/app-release.apk
 
-# Flutter SDK
+# -----------------------------------------------------------------------------
+# 5. Android Build Caches & Keystores (Gradle Wrapper is TRACKED)
+# -----------------------------------------------------------------------------
+**/android/.gradle/
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/.cxx/
+**/android/captures/
+key.properties
+**/*.keystore
+**/*.jks
+
+# -----------------------------------------------------------------------------
+# 6. Local SDKs & Archives
+# -----------------------------------------------------------------------------
 flutter_sdk/
